@@ -43,12 +43,12 @@
 						<label for="empName_add_input" class="col-sm-2 control-label">姓名</label>
 						<div class="col-sm-10">
 							<input type="text" name="empName" class="form-control" id="empName_add_input"
-							       placeholder="empName">
+							       placeholder="李四">
 							<span class="help-block"></span>
 						</div>
 					</div>
 					<div class="form-group">
-						<label for="email_add_input" class="col-sm-2 control-label">email</label>
+						<label for="email_add_input" class="col-sm-2 control-label">邮箱</label>
 						<div class="col-sm-10">
 							<input type="text" name="email" class="form-control" id="email_add_input"
 							       placeholder="email@163.com">
@@ -57,7 +57,7 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-sm-2 control-label">gender</label>
+						<label class="col-sm-2 control-label">性别</label>
 						<div class="col-sm-10">
 							<label class="radio-inline">
 								<input type="radio" name="gender" id="gender1_add_input" value="M" checked="checked"> 男
@@ -68,7 +68,7 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label for="email_add_input" class="col-sm-2 control-label">deptName</label>
+						<label for="email_add_input" class="col-sm-2 control-label">部门</label>
 						<div class="col-sm-4">
 							<!-- 部门提交部门id即可-->
 							<select class="form-control" name="dId" id="dept_add_select">
@@ -272,10 +272,20 @@
         navEle.appendTo("#page_nav_area");
     }
 
+    //清空表单样式及内容
+    function reset_form(ele) {
+        $(ele)[0].reset();
+        //清空表单样式
+        $(ele).find("*").removeClass("has-error has-success");
+        $(ele).find(".help-block").text("");
+    }
+
     //点击新增按钮弹出模态框
     $("#emp_add_model_btn").click(function () {
+        //清除表单数据(表单完整重置（表单的数据和样式）)
+        reset_form("#empAddModal form");
+        //$()[0].reset();
         //发送ajax请求，查出部门信息,显示到下拉列表
-
         getDepts();
         //弹出模态框
         $("#empAddModal").modal({
@@ -342,9 +352,9 @@
     //显示校验的提示信息
     function show_validate_msg(ele, status, msg) {
         //清除当前元素的校验状态
-	    $(ele).parent().removeClass("has-success has-error")
+        $(ele).parent().removeClass("has-success has-error")
         $(ele).next("span").text("");
-	    if ("success" == status) {
+        if ("success" == status) {
             $(ele).parent().addClass("has-success");
             $(ele).next("span").text(msg);
         } else if ("error" == status) {
@@ -353,13 +363,40 @@
         }
     }
 
+
+    //检验用户名是否可用
+    $("#empName_add_input").change(function () {
+        //发送ajax请求校验用户名是否可用
+        var empName = this.value;
+        $.ajax({
+            url: "${APP_PATH}/checkuser",
+            data: "empName=" + empName,
+            type: "POST",
+            success: function (result) {
+                if (result.code == 100) {
+                    show_validate_msg("#empName_add_input", "success", "用户名可用");
+                    $("#emp_save_btn").attr("ajax-va", "success");
+                } else {
+                    show_validate_msg("#empName_add_input", "error", result.extend.vs_msg);
+                    $("#emp_save_btn").attr("ajax-va", "error");
+                }
+            }
+        });
+    });
+
     //保存员工
     $("#emp_save_btn").click(function () {
         //1、模态框中填写的表单数据提交给服务器进行保存
+        //1、先对要提交给服务器的数据进行校验
         if (!validate_add_form()) {
             return false;
         }
         ;
+        //1、判断之前的ajax用户名校验是否成功。如果成功下一步
+        if ($(this).attr("ajax-va") == "error") {
+            return false;
+        }
+
         //2、发送ajax请求保存员工
         $.ajax({
             url: "${APP_PATH}/emp",
@@ -367,14 +404,29 @@
             data: $("#empAddModal form").serialize(),
             success: function (result) {
                 //alert(result.msg);
-                //1、关闭模态框
-                $("#empAddModal").modal('hide');
-                //2、调转到最后一页,显示刚才保存的数据
-                //发送ajax请求，显示最后一页数据
-                to_page(totalRecord);
+                if (result.code == 100) {
+                    //员工保存成功
+                    //1、关闭模态框
+                    $("#empAddModal").modal('hide');
+                    //2、调转到最后一页,显示刚才保存的数据
+                    //发送ajax请求，显示最后一页数据
+                    to_page(totalRecord);
+                } else {
+                    //显示失败信息
+                    //console.log(result);
+                    //有哪个字段的错误信息，就显示哪个
+                    if (undefined != result.extend.errorFields.email) {
+                        //显示邮箱的错误信息
+                        show_validate_msg("#email_add_input", "error", result.extend.errorFields.email);
+                    }
+                    if (undefined != result.extend.errorFields.empName) {
+                        //显示员工名字的错误信息
+                        show_validate_msg("#empName_add_input", "error", result.extend.errorFields.empName);
+                    }
+                }
+
             }
         });
-
     });
 </script>
 </body>
