@@ -1,7 +1,5 @@
 package com.raven.crud.bean;
 
-import org.hibernate.validator.constraints.Email;
-
 import javax.validation.constraints.Pattern;
 
 public class Employee {
@@ -20,7 +18,7 @@ public class Employee {
 
     private Integer dId;
 
-    //希望查询员工的同时部门信息也是查询好的
+    //希望查询员工的同时,部门信息也是查询好的
     private Department department;
 
     public Employee() {
