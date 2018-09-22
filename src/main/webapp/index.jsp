@@ -60,7 +60,8 @@
 						<label class="col-sm-2 control-label">性别</label>
 						<div class="col-sm-10">
 							<label class="radio-inline">
-								<input type="radio" name="gender" id="gender1_update_input" value="M" checked="checked"> 男
+								<input type="radio" name="gender" id="gender1_update_input" value="M" checked="checked">
+								男
 							</label>
 							<label class="radio-inline">
 								<input type="radio" name="gender" id="gender2_update_input" value="F"> 女
@@ -196,7 +197,7 @@
 <script type="text/javascript">
 
     //全局定义一个总记录数变量
-    var totalRecord,currentPage;
+    var totalRecord, currentPage;
     //1、页面加载完成以后，直接去发送一个ajax请求，要到分页数据
     $(function () {
         //去首页
@@ -242,11 +243,12 @@
             var editBtn = $("<button></button>").addClass("btn btn-primary btn-sm edit_btn")
                     .append($("<span></span>").addClass("glyphicon glyphicon-pencil")).append("编辑");
             //为编辑按钮添加一个自定义的属性，来表示当前员工id
-	        editBtn.attr("edit-id",item.empId);
+            editBtn.attr("edit-id", item.empId);
             //删除按钮
             var delBtn = $("<button></button>").addClass("btn btn-danger btn-sm delete_btn")
                 .append($("<span></span>").addClass("glyphicon glyphicon-trash")).append("删除");
-
+            //为删除按钮添加一个自定义的属性，来表示当前员工id
+            delBtn.attr("del-id", item.empId);
             //将俩个按钮放到一个单元格中
             var btnTd = $("<td></td>").append(editBtn).append(" ").append(delBtn);
             //append方法执行完成以后还是返回原来的元素
@@ -343,6 +345,7 @@
         $(ele).find(".help-block").text("");
     }
 
+    <!--添加用户功能模块-->
     //点击新增按钮弹出模态框
     $("#emp_add_model_btn").click(function () {
         //清除表单数据(表单完整重置（表单的数据和样式）)
@@ -492,41 +495,43 @@
             }
         });
     });
-    
+
     //点击编辑按钮弹出模态框
     //1、我们是在按钮创建之前绑定了click,所以绑不上。
-	//2、可以在创建按钮的时候绑定.2、绑定点击.live();
-	//3、jQuery新版没有live方法，使用on进行替代
-	$(document).on("click",".edit_btn",function () {
-		//alert("edit");
+    //2、可以在创建按钮的时候绑定.2、绑定点击.live();
+    //3、jQuery新版没有live方法，使用on进行替代
+    $(document).on("click", ".edit_btn", function () {
+        //alert("edit");
         //1、查出部门信息，并显示部门列表
         getDepts("#empUpdateModal select");
-        
-		//2、查出员工信息，将员工信息显示到列表
-		getEmp($(this).attr("edit-id"));
-		
-		//3、把员工的id传递给模态框的更新按钮
-		$("#emp_update_btn").attr("edit-id",$(this).attr("edit-id"));
-		
-		$("#empUpdateModal").modal({
-			backdrop:"static"
-		});
+
+        //2、查出员工信息，将员工信息显示到列表
+        getEmp($(this).attr("edit-id"));
+
+        //3、把员工的id传递给模态框的更新按钮
+        $("#emp_update_btn").attr("edit-id", $(this).attr("edit-id"));
+
+        $("#empUpdateModal").modal({
+            backdrop: "static"
+        });
     });
-	
-	//编辑员工信息
-	function getEmp(id) {
-		$.ajax({
-			url:"${APP_PATH}/emp/"+id,
-			type:"GET",
-			success:function (result) {
-				//console.log(result);
-				var  empData = result.extend.emp;
-				$("#empName_update_static").text(empData.empName);
-				$("#email_update_input").val(empData.email);
-				$("#empUpdateModal input[name=gender]").val([empData.gender]);
+
+
+    <!--更新用户功能模块-->
+    //编辑员工信息
+    function getEmp(id) {
+        $.ajax({
+            url: "${APP_PATH}/emp/" + id,
+            type: "GET",
+            success: function (result) {
+                //console.log(result);
+                var empData = result.extend.emp;
+                $("#empName_update_static").text(empData.empName);
+                $("#email_update_input").val(empData.email);
+                $("#empUpdateModal input[name=gender]").val([empData.gender]);
                 $("#empUpdateModal select").val([empData.dId]);
             }
-		});
+        });
     }
 
     //点击更新，更新员工信息
@@ -541,20 +546,41 @@
         } else {
             show_validate_msg("#email_update_input", "success", "");
         }
-        
+
         //2、发送ajax请求保存更新的员工数据
-	    $.ajax({
-		   url:"${APP_PATH}/emp/"+$(this).attr("edit-id"),
-		   type:"PUT",
-		    data:$("#empUpdateModal form").serialize(),
-		    success:function (result) {
-			   //alert(result.msg);
-			    //1、关闭对话框
-			    $("#empUpdateModal").modal('hide');
-			    //2、返回本页面
-			    to_page(currentPage);
+        $.ajax({
+            url: "${APP_PATH}/emp/" + $(this).attr("edit-id"),
+            type: "PUT",
+            data: $("#empUpdateModal form").serialize(),
+            success: function (result) {
+                //alert(result.msg);
+                //1、关闭对话框
+                $("#empUpdateModal").modal('hide');
+                //2、返回本页面
+                to_page(currentPage);
             }
-	    });
+        });
+    });
+
+    <!--删除用户功能模块-->
+    //单个删除
+    $(document).on("click", ".delete_btn", function () {
+        //1、弹出是否确认删除
+        var empName = $(this).parents("tr").find("td:eq(1)").text();
+        var empId = $(this).attr("del-id");
+        //alert($(this).parents("tr").find("td:eq(1)").text());
+        if (confirm("确认删除【" + empName + "】吗？")) {
+            //确认，发送ajax请求删除即可
+            $.ajax({
+                url: "${APP_PATH}/emp/" + empId,
+                type: "DELETE",
+                success: function (result) {
+                    alert(result.msg);
+                    //回到本页面
+                    to_page(currentPage);
+                }
+            });
+        }
     });
 </script>
 </body>

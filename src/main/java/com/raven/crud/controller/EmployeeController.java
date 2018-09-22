@@ -41,46 +41,61 @@ public class EmployeeController {
     @Autowired
     EmployeeService employeeService;
 
+    /**
+     * 根据员工id删除
+     *
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "/emp/{id}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Msg deleteEmpById(@PathVariable("id") Integer id) {
+        employeeService.deleteEmp(id);
+        return Msg.success();
+    }
 
     /**
      * 如果直接发送put请求
      * 封装的数据
-     *
+     * <p>
      * 问题：
      * 请求体中有数据，但是对象封装不上，
      * update tbl_emp where emp_id = 1022
-     *
+     * <p>
      * 原因：
      * tomcat：
      * 1、请求体重的数据，封装了一个map。
      * 2、request.getParameter("empName"),就会从这个map中取值了
      * 3、SpringMvc封装POJO对象的时候。
-     *    会把POJO中每个属性的值，request.getParameter("email")
-     *
+     * 会把POJO中每个属性的值，request.getParameter("email")
+     * <p>
      * AJAX发送put请求引发的血案
-     *      PUT请求，请求体中的数据，request.("empName")拿不到
-     *      Tomcat一看是PUT不会封装请求体中的数据为map，只有post形式的请求才会封装请求体为map
+     * PUT请求，请求体中的数据，request.("empName")拿不到
+     * Tomcat一看是PUT不会封装请求体中的数据为map，只有post形式的请求才会封装请求体为map
      * org.apache.catalina.connector.Request--getParameter()()
-     *
+     * <p>
      * 解决方案：
      * 我们要能直接发送PUT之类的请求还要封装请求体中的数据
      * 1、配置上HttpPutFormContentFilter过滤器
      * 2、这个过滤器的作用，将请求体重的的数据解析包装成一个map.
      * 3、request被重新包装，request。getparameter（）被重写，就会从自己封装的map中取数据。
-     *
+     * <p>
      * 根据员工id更新方法
+     *
      * @param employee
      * @return
      */
-    @RequestMapping(value = "/emp/{empId}",method = RequestMethod.PUT)
+    @RequestMapping(value = "/emp/{empId}", method = RequestMethod.PUT)
     @ResponseBody
-    public Msg saveEmp(Employee employee){
-        System.out.println("将要更新的员工数据："+employee);
+    public Msg saveEmp(Employee employee) {
+        System.out.println("将要更新的员工数据：" + employee);
         employeeService.updateEmp(employee);
         return Msg.success();
     }
+
     /**
      * 根据id查询员工
+     *
      * @param id
      * @return
      */
