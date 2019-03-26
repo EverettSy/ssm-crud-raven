@@ -1,0 +1,5 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+src/main/java/com/raven/crud/utils/
+src/test/
+target/
